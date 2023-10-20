@@ -1,20 +1,22 @@
 name: Release
 
-on:
-  workflow_run:
-    workflows: [ "Test" ]
-    branches: [ "main", "next" ]
-    types:
-      - completed
+#on:
+#  workflow_run:
+#    workflows: [ "Test" ]
+#    branches: [ "main", "next" ]
+#    types:
+#      - completed
+
+on: push
 
 jobs:
   main:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+#    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          token: '${{ secrets.TOLGEE_MACHINE_PAT }}'
+#        with:
+#          token: '${{ secrets.TOLGEE_MACHINE_PAT }}'
 
       - uses: actions/setup-java@v3
         with:
@@ -30,77 +32,84 @@ jobs:
         run: |
           git config --local user.email "machine@tolgee.io"
           git config --local user.name "Tolgee Machine"
+#
+#      - name: Install node modules
+#        run: npm ci
+#
+#      - name: Run get new version
+#        run: npm run release-dry
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install node modules
-        run: npm ci
-
-      - name: Run get new version
-        run: npm run release-dry
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set version property
-        id: version
-        run: echo "VERSION=$(test -e .VERSION && echo v$(cat .VERSION))" >> $GITHUB_OUTPUT
+#      - name: Set version property
+#        id: version
+#        run: echo "VERSION=$(test -e .VERSION && echo v$(cat .VERSION))" >> $GITHUB_OUTPUT
 
       - name: BootJar with version
-        if: ${{ steps.version.outputs.VERSION != '' }}
+#        if: ${{ steps.version.outputs.VERSION != '' }}
         run: ./gradlew bootJar
-        env:
-          VERSION: ${{ steps.version.outputs.VERSION }}
-          TOLGEE_API_KEY: ${{secrets.TOLGEE_API_KEY}}
-          TOLGEE_API_URL: ${{secrets.TOLGEE_API_URL}}
+#        env:
+#          VERSION: ${{ steps.version.outputs.VERSION }}
+#          TOLGEE_API_KEY: ${{secrets.TOLGEE_API_KEY}}
+#          TOLGEE_API_URL: ${{secrets.TOLGEE_API_URL}}
 
-      - name: Login to docker
-        if: ${{ steps.version.outputs.VERSION != '' }}
-        run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p "${{ secrets.DOCKERHUB_PASSWORD }}"
+#      - name: Login to docker
+#        if: ${{ steps.version.outputs.VERSION != '' }}
+#        run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p "${{ secrets.DOCKERHUB_PASSWORD }}"
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare for docker build
-        if: ${{ steps.version.outputs.VERSION != '' }}
+#        if: ${{ steps.version.outputs.VERSION != '' }}
         run: ./gradlew dockerPrepare
-        env:
-          VERSION: ${{ steps.version.outputs.VERSION }}
-          TOLGEE_API_KEY: ${{secrets.TOLGEE_API_KEY}}
-          TOLGEE_API_URL: ${{secrets.TOLGEE_API_URL}}
+#        env:
+#          VERSION: ${{ steps.version.outputs.VERSION }}
+#          TOLGEE_API_KEY: ${{secrets.TOLGEE_API_KEY}}
+#          TOLGEE_API_URL: ${{secrets.TOLGEE_API_URL}}
 
       - name: Create docker image
-        if: ${{ steps.version.outputs.VERSION != '' }}
+#        if: ${{ steps.version.outputs.VERSION != '' }}
         run: |
           docker buildx create --use
-          docker buildx build . -t tolgee/tolgee:${{ steps.version.outputs.VERSION }} --platform linux/arm64,linux/amd64 --push
-          docker buildx build . -t tolgee/tolgee:latest --platform linux/arm64,linux/amd64 --push
+          docker buildx build . -t ghcr.io/eve0415/tolgee-discord:latest --platform linux/arm64,linux/amd64 --push
+#          docker buildx build . -t tolgee/tolgee:latest --platform linux/arm64,linux/amd64 --push
         working-directory: build/docker
 
       - name: Pack with webapp
-        if: ${{ steps.version.outputs.VERSION != '' }}
+#        if: ${{ steps.version.outputs.VERSION != '' }}
         run: ./gradlew packResources
-        env:
-          VERSION: ${{ steps.version.outputs.VERSION }}
-          TOLGEE_API_KEY: ${{secrets.TOLGEE_API_KEY}}
-          TOLGEE_API_URL: ${{secrets.TOLGEE_API_URL}}
+#        env:
+#          VERSION: ${{ steps.version.outputs.VERSION }}
+#          TOLGEE_API_KEY: ${{secrets.TOLGEE_API_KEY}}
+#          TOLGEE_API_URL: ${{secrets.TOLGEE_API_URL}}
 
-      - name: Run npm release
-        if: ${{ steps.version.outputs.VERSION != '' }}
-        run: npm run release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.version.outputs.VERSION }}
+#      - name: Run npm release
+#        if: ${{ steps.version.outputs.VERSION != '' }}
+#        run: npm run release
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          VERSION: ${{ steps.version.outputs.VERSION }}
 
-      - uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: test
-          path: |
-            ./e2e/cypress/videos/**/*
-            ./e2e/cypress/screenshots/**/*
-            ./build/reports/**/*
+#      - uses: actions/upload-artifact@v3
+#        if: always()
+#        with:
+#          name: test
+#          path: |
+#            ./e2e/cypress/videos/**/*
+#            ./e2e/cypress/screenshots/**/*
+#            ./build/reports/**/*
 
-      - name: Trigger Billing repo tests & testing deploy
-        if: ${{ steps.version.outputs.VERSION != '' }}
-        run: |
-          curl \
-            -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: token ${{ secrets.TOLGEE_MACHINE_PAT }}" \
-            https://api.github.com/repos/tolgee/billing/actions/workflows/test.yml/dispatches \
-            -d '{"ref":"main","inputs":{"releaseVersion":"${{ steps.version.outputs.VERSION }}"}}'
+#      - name: Trigger Billing repo tests & testing deploy
+#        if: ${{ steps.version.outputs.VERSION != '' }}
+#        run: |
+#          curl \
+#            -X POST \
+#            -H "Accept: application/vnd.github.v3+json" \
+#            -H "Authorization: token ${{ secrets.TOLGEE_MACHINE_PAT }}" \
+#            https://api.github.com/repos/tolgee/billing/actions/workflows/test.yml/dispatches \
+#            -d '{"ref":"main","inputs":{"releaseVersion":"${{ steps.version.outputs.VERSION }}"}}'
