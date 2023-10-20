@@ -17,6 +17,7 @@ import io.tolgee.model.UserAccount
 import io.tolgee.security.authentication.JwtService
 import io.tolgee.security.payload.JwtAuthenticationResponse
 import io.tolgee.security.ratelimit.RateLimited
+import io.tolgee.security.third_party.DiscordOAuthDelegate
 import io.tolgee.security.third_party.GithubOAuthDelegate
 import io.tolgee.security.third_party.GoogleOAuthDelegate
 import io.tolgee.security.third_party.OAuth2Delegate
@@ -48,6 +49,7 @@ class PublicController(
   private val jwtService: JwtService,
   private val githubOAuthDelegate: GithubOAuthDelegate,
   private val googleOAuthDelegate: GoogleOAuthDelegate,
+  private val discordOAuthDelegate: DiscordOAuthDelegate,
   private val oauth2Delegate: OAuth2Delegate,
   private val properties: TolgeeProperties,
   private val userAccountService: UserAccountService,
@@ -170,6 +172,10 @@ When E-mail verification is enabled, null is returned. Otherwise JWT token is pr
 
       "google" -> {
         googleOAuthDelegate.getTokenResponse(code, invitationCode, redirectUri)
+      }
+
+      "discord" -> {
+        discordOAuthDelegate.getTokenResponse(code, invitationCode, redirectUri)
       }
 
       "oauth2" -> {

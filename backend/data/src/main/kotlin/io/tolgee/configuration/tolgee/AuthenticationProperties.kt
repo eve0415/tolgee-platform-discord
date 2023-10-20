@@ -130,6 +130,7 @@ class AuthenticationProperties(
 
   var github: GithubAuthenticationProperties = GithubAuthenticationProperties(),
   var google: GoogleAuthenticationProperties = GoogleAuthenticationProperties(),
+  var discord: DiscordAuthenticationProperties = DiscordAuthenticationProperties(),
   var oauth2: OAuth2AuthenticationProperties = OAuth2AuthenticationProperties(),
 ) {
   fun checkAllowedRegistrations() {
