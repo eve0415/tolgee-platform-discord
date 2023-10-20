@@ -1938,6 +1938,7 @@ export interface components {
     AuthMethodsDTO: {
       github: components["schemas"]["OAuthPublicConfigDTO"];
       google: components["schemas"]["OAuthPublicConfigDTO"];
+      discord: components["schemas"]["OAuthPublicConfigDTO"]&{scopes?: string[]};
       oauth2: components["schemas"]["OAuthPublicExtendsConfigDTO"];
     };
     InitialDataModel: {

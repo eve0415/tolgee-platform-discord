@@ -15,7 +15,10 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
+import org.springframework.util.LinkedMultiValueMap
+import org.springframework.util.MultiValueMap
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestTemplate
 
@@ -34,17 +37,20 @@ fun getTokenResponse(
     invitationCode: String?,
     redirectUri: String?
   ): JwtAuthenticationResponse {
-try {
-      val body = HashMap<String, String?>()
+    try {
+      val body: MultiValueMap<String, String> = LinkedMultiValueMap<String, String>()
       body["client_id"] = discordConfigurationProperties.clientId
       body["client_secret"] = discordConfigurationProperties.clientSecret
       body["code"] = receivedCode
       body["grant_type"] = "authorization_code"
       body["redirect_uri"] = redirectUri
 
+      val requestHeaders = HttpHeaders()
+      requestHeaders.contentType = MediaType.APPLICATION_FORM_URLENCODED
+
       // get token to authorize to discord api
       val response: MutableMap<*, *>? = restTemplate
-        .postForObject(discordConfigurationProperties.authorizationUrl, body, MutableMap::class.java)
+          .postForObject(discordConfigurationProperties.authorizationUrl, HttpEntity(body, requestHeaders), MutableMap::class.java)
       if (response != null && response.containsKey("access_token")) {
         val headers = HttpHeaders()
         headers["Authorization"] = "Bearer " + response["access_token"]
@@ -53,7 +59,7 @@ try {
         // get discord user data
 
         val exchange = restTemplate
-          .exchange(discordConfigurationProperties.userUrl, HttpMethod.GET, entity, DiscordOAuthDelegate.DiscordUserResponse::class.java)
+          .exchange(discordConfigurationProperties.userUrl, HttpMethod.GET, entity, DiscordUserResponse::class.java)
         if (exchange.statusCode != HttpStatus.OK || exchange.body == null) {
           throw AuthenticationException(Message.THIRD_PARTY_UNAUTHORIZED)
         }
@@ -107,8 +113,10 @@ try {
       if (response.containsKey("error")) {
         throw AuthenticationException(Message.THIRD_PARTY_AUTH_ERROR_MESSAGE)
       }
+    println("Unknown error")
       throw AuthenticationException(Message.THIRD_PARTY_AUTH_UNKNOWN_ERROR)
     } catch (e: HttpClientErrorException) {
+        println(e)
       throw AuthenticationException(Message.THIRD_PARTY_AUTH_UNKNOWN_ERROR)
     }
   }

@@ -37,6 +37,7 @@ class PublicConfigurationDTO(
   class AuthMethodsDTO(
     val github: OAuthPublicConfigDTO,
     val google: OAuthPublicConfigDTO,
+    val discord: OAuthPublicConfigDTO,
     val oauth2: OAuthPublicExtendsConfigDTO
   )
 
@@ -69,6 +70,7 @@ class PublicConfigurationDTO(
           properties.authentication.github.clientId
         ),
         OAuthPublicConfigDTO(properties.authentication.google.clientId),
+        OAuthPublicConfigDTO(properties.authentication.discord.clientId),
         OAuthPublicExtendsConfigDTO(
           properties.authentication.oauth2.clientId,
           properties.authentication.oauth2.authorizationUrl,

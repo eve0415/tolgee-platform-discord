@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const GITHUB_BASE = 'https://github.com/login/oauth/authorize';
 const GOOGLE_BASE = 'https://accounts.google.com/o/oauth2/v2/auth';
+const DISCORD_BASE = 'https://discord.com/oauth2/authorize';
 const LOCAL_STORAGE_STATE_KEY = 'oauth2State';
 
 export interface OAuthService {
@@ -45,6 +46,23 @@ export const googleService = (clientId: string): OAuthService => {
     buttonIcon: <GoogleIcon />,
     loginButtonTitle: <T keyName="login_google_login_button" />,
     signUpButtonTitle: <T keyName="login_google_signup_button" />,
+  };
+};
+
+export const discordService = (clientId: string, scopes: string[] = ["identify", "email"]): OAuthService => {
+  const redirectUri = LINKS.OAUTH_RESPONSE.buildWithOrigin({
+    [PARAMS.SERVICE_TYPE]: 'discord',
+  });
+  const state = uuidv4();
+  localStorage.setItem(LOCAL_STORAGE_STATE_KEY, state);
+  return {
+    id: 'discord',
+    authenticationUrl: encodeURI(
+      `${DISCORD_BASE}?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scopes.join("+")}&state=${state}`
+    ),
+    buttonIcon: <LoginIcon />,
+    loginButtonTitle: <>DISCORD Login</>,
+    signUpButtonTitle: <>DISCORD Login</>,
   };
 };
 

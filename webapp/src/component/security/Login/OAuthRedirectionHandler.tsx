@@ -29,7 +29,7 @@ export const OAuthRedirectionHandler: FunctionComponent<
     const url = new URLSearchParams(window.location.search);
     const code = url.get('code');
 
-    if (match.params[PARAMS.SERVICE_TYPE] == 'oauth2') {
+    if (match.params[PARAMS.SERVICE_TYPE] == 'oauth2' || match.params[PARAMS.SERVICE_TYPE] == 'discord') {
       const state = url.get('state');
       const storedState = localStorage.getItem(LOCAL_STORAGE_STATE_KEY);
       if (storedState !== state) {
